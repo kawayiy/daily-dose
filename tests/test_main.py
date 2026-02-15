@@ -1,10 +1,14 @@
 """
 Tests for the main routes (e.g. index page).
-使用 tests/conftest.py 中的 client fixture。
+Uses the client fixture from tests/conftest.py.
 
-Run: python -m pytest tests/test_main.py -v
+Run: 
+1. Run all tests in this file with verbose output
+python -m pytest tests/test_main.py -v
+2. Run only the test_index_returns_200 test with verbose output
+python -m pytest tests/test_main.py::test_index_returns_200 -v
+python -m pytest tests/test_main.py::test_demo_db_returns_json_list -v -s
 """
-import pytest
 
 
 def test_index_returns_200(client):

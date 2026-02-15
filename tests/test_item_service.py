@@ -1,10 +1,13 @@
-import pytest
 
 from app.services.item_service import ItemService
 
 """
-Tests for ItemService. 使用 tests/conftest.py 中的 app_context fixture。
-Run: python -m pytest tests/test_item_service.py -v
+Tests for ItemService. Uses the app_context fixture from tests/conftest.py.
+Run: 
+1. Run all tests in this file with verbose output
+python -m pytest tests/test_item_service.py -v
+2. Run only the test_add_item_returns_item_with_id test with verbose output
+python -m pytest tests/test_item_service.py::test_add_item_returns_item_with_id -v
 """
 
 

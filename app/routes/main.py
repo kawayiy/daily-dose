@@ -1,15 +1,16 @@
-from app import app
-from flask import render_template, jsonify
+
+from flask import Blueprint, render_template, jsonify
 
 from app.services.item_service import ItemService
 
+main_bp = Blueprint("main", __name__)
 
-@app.route("/")
+@main_bp.route("/")
 def index():
     return render_template("index.html")
 
 
-@app.route("/demo-db")
+@main_bp.route("/demo-db")
 def demo_db():
     
     ItemService.add_item("test-name")

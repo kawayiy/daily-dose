@@ -10,3 +10,4 @@ instance/
 venv/
 .env.local
 .pytest_cache/
+.idea

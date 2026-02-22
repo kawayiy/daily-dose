@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Add Dependent{% endblock %}
+{% block content %}
+<h2>Add Dependent</h2>
+
+<form method="get" action="{{ url_for('carer.dependents_add') }}">
+  <label>Search by email:</label>
+  <input type="text" name="q" value="{{ q or '' }}" placeholder="e.g. john@example.com">
+  <button type="submit">Search</button>
+  {% if q %}
+    <a href="{{ url_for('carer.dependents_add') }}">Clear</a>
+  {% endif %}
+</form>
+
+{% if q %}
+  <h3>Results for "{{ q }}"</h3>
+{% else %}
+  <h3>All available dependents</h3>
+{% endif %}
+
+<ul>
+  {% for u in candidates %}
+    <li>
+      {{ u.name }} ({{ u.email }})
+      <form method="post" action="{{ url_for('carer.dependents_add') }}" style="display:inline;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="dependent_id" value="{{ u.id }}">
+        <button type="submit">Link</button>
+      </form>
+    </li>
+  {% else %}
+    <li>No available dependents.</li>
+  {% endfor %}
+</ul>
+
+<p><a href="{{ url_for('carer.dependents_list') }}">Back</a></p>
+{% endblock %}

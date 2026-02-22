@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Register{% endblock %}
+{% block content %}
+<h2>Register</h2>
+<form method="post">
+  {{ form.csrf_token }}
+  <p>{{ form.name.label }}<br>{{ form.name(size=32) }}</p>
+  <p>{{ form.email.label }}<br>{{ form.email(size=32) }}</p>
+  <p>{{ form.password.label }}<br>{{ form.password(size=32) }}</p>
+  <p>{{ form.password_confirm.label }}<br>{{ form.password_confirm(size=32) }}</p>
+  <p>{{ form.role.label }}<br>{{ form.role() }}</p>
+  <p>{{ form.phone.label }}<br>{{ form.phone(size=32) }}</p>
+  <p>{{ form.age.label }}<br>{{ form.age() }}</p>
+  <p>{{ form.submit() }}</p>
+</form>
+<p><a href="{{ url_for('auth.login') }}">Login</a></p>
+{% endblock %}

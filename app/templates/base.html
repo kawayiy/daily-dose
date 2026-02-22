@@ -2,9 +2,40 @@
 <html>
 <head>
     <title>{% block title %}Daily Dose{% endblock %}</title>
-   
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
 </head>
 <body>
+
+{% set hide_user_menu = request.endpoint in ['auth.login', 'auth.register'] %}
+
+{% if current_user.is_authenticated and not hide_user_menu %}
+  <header class="dd-topbar">
+    <div class="dd-brand">
+      <a href="{{ url_for('main.index') }}">DailyDose</a>
+    </div>
+    <div class="dd-user">
+      <details>
+        <summary>{{ current_user.name }}</summary>
+        <div class="dd-menu">
+          <p class="dd-name">{{ current_user.name }}</p>
+          <p class="dd-role">
+            {% if current_user.role == 'carer' %}
+              Role: Carer
+            {% elif current_user.role == 'dependent' %}
+              Role: Dependent
+            {% else %}
+              Role: {{ current_user.role }}
+            {% endif %}
+          </p>
+          <form method="post" action="{{ url_for('auth.logout') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit">Log out</button>
+          </form>
+        </div>
+      </details>
+    </div>
+  </header>
+{% endif %}
 
 <!-- Flash messages -->
 {% with messages = get_flashed_messages() %}
@@ -17,7 +48,9 @@
   {% endif %}
 {% endwith %}
 
-{% block content %}{% endblock %}
+<main class="dd-page">
+  {% block content %}{% endblock %}
+</main>
 
 </body>
 </html>

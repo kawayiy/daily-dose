@@ -12,6 +12,7 @@
     {% for u in dependents %}
       <li style="margin-bottom: 10px;">
         <strong>{{ u.name }}</strong> <span style="color:#6b7280;">({{ u.email }})</span>
+        <a href="{{ url_for('carer.dependent_schedule', dependent_id=u.id) }}">Medication plan</a>
         <form method="post" action="{{ url_for('carer.dependents_remove', dependent_id=u.id) }}" style="display:inline;">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="submit">Remove</button>

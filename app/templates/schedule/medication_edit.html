@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}{% if dependent_id %}{{ dependent_name }}'s plan - Edit medication{% else %}Edit medication{% endif %}{% endblock %}
+{% block content %}
+
+<h2>{% if dependent_id %}{{ dependent_name }}'s plan - Edit medication{% else %}Edit medication{% endif %}</h2>
+{% if dependent_id %}
+  <p class="dd-muted">Carer managing medications</p>
+  <p><a href="{{ url_for('carer.dependent_schedule', dependent_id=dependent_id) }}">← Back to medication plan</a></p>
+{% else %}
+  <p><a href="{{ url_for('schedule.plan') }}">← Back to medication plan</a></p>
+{% endif %}
+
+<section class="dd-section">
+  <form method="post" action="{% if dependent_id %}{{ url_for('carer.medication_edit', dependent_id=dependent_id, medication_id=medication_id) }}{% else %}{{ url_for('schedule.medication_edit', medication_id=medication_id) }}{% endif %}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <p>{{ medication_form.name.label }}<br>{{ medication_form.name(size=40) }}</p>
+    {% if medication_form.name.errors %}<p class="dd-error">{{ medication_form.name.errors[0] }}</p>{% endif %}
+    <p>{{ medication_form.dosage.label }}<br>{{ medication_form.dosage(size=40) }}</p>
+    {% if medication_form.dosage.errors %}<p class="dd-error">{{ medication_form.dosage.errors[0] }}</p>{% endif %}
+    <p>
+      {{ medication_form.scheduled_times.label }}<br>
+      {{ medication_form.scheduled_times(size=50, placeholder='08:00, 12:00, 18:00') }}
+      <button type="button" class="dd-btn-preset" data-value="08:00, 18:00">Twice daily</button>
+      <button type="button" class="dd-btn-preset" data-value="08:00, 14:00, 20:00">Three times daily</button>
+    </p>
+    {% if medication_form.scheduled_times.errors %}<p class="dd-error">{{ medication_form.scheduled_times.errors[0] }}</p>{% endif %}
+    <p>{{ medication_form.instructions.label }}<br>{{ medication_form.instructions(size=50) }}</p>
+    <p>{{ medication_form.start_date.label }}<br>{{ medication_form.start_date() }}</p>
+    <p>{{ medication_form.duration_days.label }}<br>{{ medication_form.duration_days(size=8) }}</p>
+    <p>{{ medication_form.submit() }}</p>
+  </form>
+</section>
+
+<script>
+(function() {
+  document.querySelectorAll('.dd-btn-preset').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var value = this.getAttribute('data-value');
+      var el = document.querySelector('input[name="scheduled_times"]');
+      if (el) el.value = value;
+    });
+  });
+})();
+</script>
+{% endblock %}

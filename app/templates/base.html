@@ -37,18 +37,25 @@
   </header>
 {% endif %}
 
-<!-- Flash messages -->
+<!-- Flash message popup (one toast) -->
 {% with messages = get_flashed_messages() %}
   {% if messages %}
-    <ul class="flashes">
-      {% for message in messages %}
-        <li>{{ message }}</li>
-      {% endfor %}
-    </ul>
+    <div class="dd-toast" id="dd-toast" role="alert">
+      <p class="dd-toast-message">{{ messages[0] }}</p>
+      <button type="button" class="dd-toast-close" aria-label="Close" onclick="document.getElementById('dd-toast').remove()">×</button>
+    </div>
+    <script>
+      (function() {
+        var el = document.getElementById('dd-toast');
+        if (el) {
+          setTimeout(function() { el.remove(); }, 1000);
+        }
+      })();
+    </script>
   {% endif %}
 {% endwith %}
 
-<main class="dd-page">
+<main class="dd-page {% if request.endpoint in ['auth.login', 'auth.register'] %}dd-page--auth{% endif %}">
   {% block content %}{% endblock %}
 </main>
 

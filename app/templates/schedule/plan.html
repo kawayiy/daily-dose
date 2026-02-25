@@ -1,6 +1,75 @@
 {% extends "base.html" %}
-{% block title %}Medication Plan{% endblock %}
+{% block title %}{% if dependent_id %}{{ dependent_name }}'s Medication Plan{% else %}My Medication Plan{% endif %}{% endblock %}
 {% block content %}
-<h2>My Medication Plan</h2>
-<p>This page will display and edit the dependent's medication plan (to be integrated with S1: Medication Schedule Setup).</p>
+
+<h2>{% if dependent_id %}{{ dependent_name }}'s Medication Plan{% else %}My Medication Plan{% endif %}</h2>
+{% if dependent_id %}
+  <p class="dd-muted">Carer view / manage medications</p>
+  <p><a href="{{ url_for('carer.dependents_list') }}" class="dd-link-back">← Back to dependents</a></p>
+{% endif %}
+
+<section class="dd-section">
+  <p>
+    {% if dependent_id %}
+      <a href="{{ url_for('carer.prescription_new', dependent_id=dependent_id) }}" class="dd-btn-link">New prescription</a>
+      <a href="{{ url_for('carer.medication_add', dependent_id=dependent_id) }}" class="dd-btn-link">Add medication</a>
+    {% else %}
+      <a href="{{ url_for('schedule.prescription_new') }}" class="dd-btn-link">New prescription</a>
+      <a href="{{ url_for('schedule.medication_add') }}" class="dd-btn-link">Add medication</a>
+    {% endif %}
+  </p>
+</section>
+
+<section class="dd-section">
+  <h3>Current medications</h3>
+  {% if schedule_data %}
+    {% for block in schedule_data %}
+      <div class="dd-prescription-block">
+        <h4 class="dd-prescription-heading">
+          {{ block.name or ('Prescription #' ~ block.prescription_id) }}{% if block.prescribed_at %} <span class="dd-muted">({{ block.prescribed_at }})</span>{% endif %}
+          <span class="dd-actions">
+            {% if dependent_id %}
+              <a href="{{ url_for('carer.prescription_edit', dependent_id=dependent_id, prescription_id=block.prescription_id) }}" class="dd-action-link">Edit</a>
+              <form method="post" action="{{ url_for('carer.prescription_delete', dependent_id=dependent_id, prescription_id=block.prescription_id) }}" class="dd-action-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="dd-action-btn dd-action-btn--danger">Delete</button>
+              </form>
+            {% else %}
+              <a href="{{ url_for('schedule.prescription_edit', prescription_id=block.prescription_id) }}" class="dd-action-link">Edit</a>
+              <form method="post" action="{{ url_for('schedule.prescription_delete', prescription_id=block.prescription_id) }}" class="dd-action-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="dd-action-btn dd-action-btn--danger">Delete</button>
+              </form>
+            {% endif %}
+          </span>
+        </h4>
+        <ul class="dd-medication-list">
+          {% for m in block.medications %}
+            <li class="dd-medication-item">
+              <strong>{{ m.name }}</strong> {{ m.dosage }}
+              — Time: {{ m.scheduled_times|join(', ') }}
+              {% if dependent_id %}
+                <a href="{{ url_for('carer.medication_edit', dependent_id=dependent_id, medication_id=m.id) }}" class="dd-action-link">Edit</a>
+                <form method="post" action="{{ url_for('carer.medication_delete', dependent_id=dependent_id, medication_id=m.id) }}" class="dd-action-form">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="dd-action-btn dd-action-btn--danger">Delete</button>
+                </form>
+              {% else %}
+                <a href="{{ url_for('schedule.medication_edit', medication_id=m.id) }}" class="dd-action-link">Edit</a>
+                <form method="post" action="{{ url_for('schedule.medication_delete', medication_id=m.id) }}" class="dd-action-form">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="dd-action-btn dd-action-btn--danger">Delete</button>
+                </form>
+              {% endif %}
+              {% if m.instructions %}<br><span class="dd-muted">{{ m.instructions }}</span>{% endif %}
+              {% if m.start_date or m.duration_days %}<br><span class="dd-muted">{% if m.start_date %}From {{ m.start_date }}{% endif %}{% if m.duration_days %} for {{ m.duration_days }} days{% endif %}</span>{% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p class="dd-muted">No prescriptions or medications yet. Create a prescription first, then add medications.</p>
+  {% endif %}
+</section>
 {% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}{% if dependent_id %}{{ dependent_name }}'s plan - Edit prescription{% else %}Edit prescription{% endif %}{% endblock %}
+{% block content %}
+
+<h2>{% if dependent_id %}{{ dependent_name }}'s plan - Edit prescription{% else %}Edit prescription{% endif %}</h2>
+{% if dependent_id %}
+  <p class="dd-muted">Carer managing medications</p>
+  <p><a href="{{ url_for('carer.dependent_schedule', dependent_id=dependent_id) }}">← Back to medication plan</a></p>
+{% else %}
+  <p><a href="{{ url_for('schedule.plan') }}">← Back to medication plan</a></p>
+{% endif %}
+
+<section class="dd-section">
+  <form method="post" action="{% if dependent_id %}{{ url_for('carer.prescription_edit', dependent_id=dependent_id, prescription_id=prescription_id) }}{% else %}{{ url_for('schedule.prescription_edit', prescription_id=prescription_id) }}{% endif %}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <p>{{ prescription_form.name.label }}<br>{{ prescription_form.name(size=40, placeholder='e.g. Cardiology, Orthopedics') }}</p>
+    {% if prescription_form.name.errors %}<p class="dd-error">{{ prescription_form.name.errors[0] }}</p>{% endif %}
+    <p>{{ prescription_form.prescribed_at.label }}<br>{{ prescription_form.prescribed_at() }}</p>
+    {% if prescription_form.prescribed_at.errors %}<p class="dd-error">{{ prescription_form.prescribed_at.errors[0] }}</p>{% endif %}
+    <p>{{ prescription_form.submit() }}</p>
+  </form>
+</section>
+{% endblock %}

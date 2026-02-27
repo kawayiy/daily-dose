@@ -6,6 +6,7 @@ import re
 from datetime import date
 from typing import TYPE_CHECKING
 
+import sqlalchemy as sa
 from app import db
 from app.models.schedule import Medication, Prescription, Schedule
 
@@ -254,3 +255,96 @@ class ScheduleService:
         except Exception:
             db.session.rollback()
             return False
+
+
+    @staticmethod
+    def get_pending_alerts(user_id: int):
+        """Find medications due in the last 2 hours that haven't been logged today."""
+        now = datetime.now()
+        current_time_str = now.strftime("%H:%M")
+        today_date = now.date()
+
+        schedule = ScheduleService.get_or_create_schedule(user_id)
+        pending = []
+
+        for prescription in schedule.prescriptions:
+            for med in prescription.medications:
+                for slot in med.scheduled_times:
+                    # Logic: If slot <= current_time AND no log exists for today
+                    if slot <= current_time_str:
+                        exists = db.session.execute(
+                            db.select(MedicationLog).where(
+                                MedicationLog.medication_id == med.id,
+                                MedicationLog.scheduled_time_slot == slot,
+                                sa.func.date(MedicationLog.taken_at) == today_date
+                            )
+                        ).scalar_one_or_none()
+
+                        if not exists:
+                            pending.append({
+                                "med_id": med.id,
+                                "name": med.name,
+                                "dosage": med.dosage,
+                                "slot": slot
+                            })
+        return pending
+
+    @staticmethod
+    def log_taken(medication_id: int, slot: str):
+        """Record that a medication has been taken."""
+        log = MedicationLog(medication_id=medication_id, scheduled_time_slot=slot)
+        db.session.add(log)
+        db.session.commit()
+
+
+    @staticmethod
+    def get_weekly_adherence_report(user_id: int):
+        now = datetime.now()
+        start_date = (now - timedelta(days=6)).date()
+        schedule = ScheduleService.get_or_create_schedule(user_id)
+
+        report = []
+        total_expected = 0
+        total_taken = 0
+
+        for i in range(7):
+            current_date = start_date + timedelta(days=i)
+            # Use a dictionary to group by prescription
+            day_data = {"date": current_date, "prescriptions": {}}
+
+            for prescription in schedule.prescriptions:
+                p_name = prescription.name or f"Prescription #{prescription.id}"
+
+                for med in prescription.medications:
+                    # Basic check for start_date
+                    if med.start_date and med.start_date > current_date:
+                        continue
+
+                    for slot in med.scheduled_times:
+                        total_expected += 1
+                        log = db.session.execute(
+                            db.select(MedicationLog).where(
+                                MedicationLog.medication_id == med.id,
+                                MedicationLog.scheduled_time_slot == slot,
+                                sa.func.date(MedicationLog.taken_at) == current_date
+                            )
+                        ).scalar_one_or_none()
+
+                        is_taken = log is not None
+                        if is_taken: total_taken += 1
+
+                        if p_name not in day_data["prescriptions"]:
+                            day_data["prescriptions"][p_name] = []
+
+                        day_data["prescriptions"][p_name].append({
+                            "med_name": med.name,
+                            "slot": slot,
+                            "taken": is_taken,
+                            "taken_at": log.taken_at if is_taken else None
+                        })
+            report.append(day_data)
+
+        percentage = (total_taken / total_expected * 100) if total_expected > 0 else 100
+        return sorted(report, key=lambda x: x['date'], reverse=True), round(percentage, 1)
+
+

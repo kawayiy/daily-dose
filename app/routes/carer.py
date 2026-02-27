@@ -97,6 +97,7 @@ def dependent_schedule(dependent_id: int):
         schedule_data=schedule_data,
         dependent_id=dependent_id,
         dependent_name=dependent_name,
+        ScheduleService=ScheduleService
     )
 
 
@@ -345,3 +346,21 @@ def medication_delete(dependent_id: int, medication_id: int):
     else:
         flash("Medication not found")
     return redirect(url_for("carer.dependent_schedule", dependent_id=dependent_id))
+
+@carer_bp.route("/dependents/<int:dependent_id>/report")
+@login_required
+def adherence_report(dependent_id: int):
+    _require_carer()
+    if not _carer_can_access_dependent(dependent_id):
+        flash("Access denied")
+        return redirect(url_for("carer.dependents_list"))
+
+    dependent = db.session.get(User, dependent_id)
+    report_data, percentage = ScheduleService.get_weekly_adherence_report(dependent_id)
+
+    return render_template(
+        "carer/report.html",
+        dependent=dependent,
+        report_data=report_data,
+        percentage=percentage
+    )

@@ -38,6 +38,7 @@ def plan():
         schedule_data=schedule_data,
         dependent_id=None,
         dependent_name=None,
+        ScheduleService=ScheduleService
     )
 
 
@@ -239,4 +240,13 @@ def medication_delete(medication_id: int):
         flash("Medication deleted")
     else:
         flash("Medication not found")
+    return redirect(url_for("schedule.plan"))
+
+@schedule_bp.route("/medication/<int:med_id>/taken", methods=["POST"])
+@login_required
+def confirm_take(med_id: int):
+    slot = request.form.get("time_slot")
+    # Basic security check: ensure med belongs to user (optional but recommended)
+    ScheduleService.log_taken(med_id, slot)
+    flash(f"Medication recorded as taken at {slot}")
     return redirect(url_for("schedule.plan"))

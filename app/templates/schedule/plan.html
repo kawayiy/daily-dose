@@ -2,10 +2,52 @@
 {% block title %}{% if dependent_id %}{{ dependent_name }}'s Medication Plan{% else %}My Medication Plan{% endif %}{% endblock %}
 {% block content %}
 
+
+{# 1. Calculate whose alerts we are checking #}
+{% set target_user_id = dependent_id if dependent_id else current_user.id %}
+{% set alerts = ScheduleService.get_pending_alerts(target_user_id) %}
+
+{# 2. Display the Alert Banner #}
+{% if alerts %}
+  <section class="dd-section dd-alert-container" style="background-color: #fcf8e3; border: 2px solid #faebcc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+    <h3 style="color: #a94442; margin-top: 0;">⚠️ Pending Medications</h3>
+    {% for alert in alerts %}
+      <div class="dd-alert-box" style="display: flex; justify-content: space-between; align-items: center; background: white; border: 1px solid #ebccd1; padding: 12px; margin-bottom: 10px; border-radius: 4px;">
+        <div>
+          <p style="margin: 0;">It's time for <strong>{{ alert.name }}</strong> ({{ alert.dosage }})</p>
+          <small class="dd-muted">Scheduled for: {{ alert.slot }}</small>
+        </div>
+
+        {# NEW LOGIC STARTS HERE #}
+        {% if dependent_id %}
+            {# CARER VIEW: Show a status label instead of an active button #}
+            <span style="background-color: #f0ad4e; color: white; padding: 5px 10px; border-radius: 4px; font-size: 0.9em; font-weight: bold;">
+             Pending Confirmation
+            </span>
+        {% else %}
+            {# DEPENDENT VIEW: Show the active button #}
+            <form method="POST" action="{{ url_for('schedule.confirm_take', med_id=alert.med_id) }}">
+             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+             <input type="hidden" name="time_slot" value="{{ alert.slot }}">
+             <button type="submit" class="dd-btn-take" style="background-color: #5cb85c; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+              I've Taken This
+             </button>
+            </form>
+        {% endif %}
+        {# NEW LOGIC ENDS HERE #}
+      </div>
+    {% endfor %}
+  </section>
+{% endif %}
+
+
 <h2>{% if dependent_id %}{{ dependent_name }}'s Medication Plan{% else %}My Medication Plan{% endif %}</h2>
 {% if dependent_id %}
   <p class="dd-muted">Carer view / manage medications</p>
-  <p><a href="{{ url_for('carer.dependents_list') }}" class="dd-link-back">← Back to dependents</a></p>
+  <p>
+    <a href="{{ url_for('carer.dependents_list') }}" class="dd-link-back">← Back to dependents</a>
+    <a href="{{ url_for('carer.adherence_report', dependent_id=dependent_id) }}" style="font-weight: bold; color: #007bff;">View Adherence Report →</a>
+  </p>
 {% endif %}
 
 <section class="dd-section">

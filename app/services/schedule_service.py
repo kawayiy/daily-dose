@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
 from app import db
-from app.models.schedule import Medication, Prescription, Schedule
+from app.models.schedule import Medication, Prescription, Schedule, MedicationLog
 
 if TYPE_CHECKING:
     pass

@@ -88,3 +88,19 @@ class Medication(db.Model):
     prescription: so.Mapped["Prescription"] = so.relationship(
         "Prescription", back_populates="medications"
     )
+
+class MedicationLog(db.Model):
+    __tablename__ = "medication_log"
+
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    medication_id: so.Mapped[int] = so.mapped_column(
+        sa.ForeignKey("medication.id"), nullable=False, index=True
+    )
+    # The actual time the button was clicked
+    taken_at: so.Mapped[datetime] = so.mapped_column(
+        sa.DateTime(timezone=True), nullable=False, default=utcnow
+    )
+    # The slot string (e.g., "08:00") to prevent duplicate logs for the same dose
+    scheduled_time_slot: so.Mapped[str] = so.mapped_column(sa.String(10), nullable=False)
+
+    medication: so.Mapped["Medication"] = so.relationship("Medication")

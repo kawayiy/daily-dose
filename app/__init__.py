@@ -11,7 +11,7 @@ csrf = CSRFProtect(app)
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = "auth.login"
-from app.models import demo, schedule  # noqa: F401 - register Schedule, Prescription, Medication
+from app.models import schedule  # noqa: F401 - register Schedule, Prescription, Medication
 
 @login_manager.user_loader
 def load_user(user_id: str):

@@ -28,12 +28,20 @@ def app_context(app):
 @pytest.fixture
 def clean_db(app_context):
     """Clear all table data before each test so fixtures can use fixed emails.
-    Depends on app_context so tables exist. Delete in FK order: medication -> prescription -> schedule -> carer_dependent -> user, item."""
+    Depends on app_context so tables exist. Delete in FK order (children before parents)."""
     from sqlalchemy import text
 
-    from app.models import demo, schedule  # noqa: F401 - register tables
+    from app.models import schedule, users  # noqa: F401 - register ORM tables
 
-    for table in ("medication", "prescription", "schedule", "carer_dependent", "user", "item"):
+    for table in (
+        "medication_log",
+        "medication",
+        "prescription",
+        "schedule",
+        "carer_dependent",
+        "user",
+        "item",
+    ):
         try:
             db.session.execute(text(f"DELETE FROM {table}"))
         except Exception:

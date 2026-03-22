@@ -9,7 +9,6 @@ Run:
 
 import pytest
 
-from app import db
 from app.models.users import User
 from app.services.user_service import UserService
 

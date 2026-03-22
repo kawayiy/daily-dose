@@ -2,21 +2,16 @@
 Tests for the main routes (e.g. index page).
 Uses the client fixture from tests/conftest.py.
 
-Run: 
-1. Run all tests in this file with verbose output
-python -m pytest tests/test_main.py -v
-2. Run only the test_index_returns_200 test with verbose output
-python -m pytest tests/test_main.py::test_index_returns_200 -v
+Run:
+  python -m pytest              # full suite
+  python -m pytest tests/test_main.py -v   # this file only
 """
 
 
-def test_index_returns_200(client):
-    """GET / should return HTTP 200."""
-    rv = client.get("/")
-    assert rv.status_code == 200
-
-
-def test_index_returns_index_page(client):
-    """GET / should return the index page with 'Welcome to DailyDose'."""
-    rv = client.get("/")
-    assert b"Welcome to DailyDose" in rv.data
+def test_index_unauthenticated_redirects_to_login(client):
+    """GET / without a session should redirect to the login page."""
+    rv = client.get("/", follow_redirects=False)
+    assert rv.status_code == 302
+    loc = rv.location or ""
+    assert "/login" in loc
+    assert loc.rstrip("/").endswith("/login")

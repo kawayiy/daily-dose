@@ -114,4 +114,13 @@
     <p class="dd-muted">No prescriptions or medications yet. Create a prescription first, then add medications.</p>
   {% endif %}
 </section>
+
+<script id="dd-plan-auto-refresh">
+(function() {
+  var refreshDelayMs = 60000 - (Date.now() % 60000);
+  window.setTimeout(function() {
+    window.location.reload();
+  }, refreshDelayMs);
+})();
+</script>
 {% endblock %}

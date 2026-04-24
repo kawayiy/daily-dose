@@ -7,6 +7,7 @@ Run:
 """
 
 from datetime import date, datetime, timezone
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -113,3 +114,50 @@ def test_get_weekly_adherence_report_skips_days_before_medication_start_date(app
     assert "Evening Plan" in previous_day["prescriptions"]
     assert older_day["prescriptions"] == {}
     assert percentage == 0.0
+
+
+def test_get_weekly_adherence_report_converts_taken_time_to_local_display_time(
+    app_context, schedule, dependent_user, monkeypatch
+):
+    """Report timestamps are displayed in local time even when SQLite returns naive UTC values."""
+    prescription = ScheduleService.create_prescription(schedule.id, name="Night Plan")
+    ScheduleService.add_medication(
+        prescription.id,
+        "Melatonin",
+        "1 tablet",
+        ["01:33"],
+        start_date=date(2025, 4, 24),
+    )
+    medication = db.session.execute(
+        db.select(Medication).where(Medication.prescription_id == prescription.id)
+    ).scalar_one()
+
+    db.session.add(
+        MedicationLog(
+            medication_id=medication.id,
+            scheduled_time_slot="01:33",
+            taken_at=datetime(2025, 4, 24, 0, 33, 0, tzinfo=timezone.utc),
+        )
+    )
+    db.session.commit()
+
+    class FixedDateTime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return cls(2025, 4, 24, 10, 0, 0)
+
+    monkeypatch.setattr(schedule_service_module, "datetime", FixedDateTime)
+    monkeypatch.setattr(
+        ScheduleService,
+        "_get_local_timezone",
+        staticmethod(lambda: ZoneInfo("Europe/London")),
+    )
+
+    report_data, _ = ScheduleService.get_weekly_adherence_report(dependent_user.id)
+
+    latest_day = report_data[0]
+    entry = latest_day["prescriptions"]["Night Plan"][0]
+
+    assert entry["slot"] == "01:33"
+    assert entry["taken"] is True
+    assert entry["taken_at"].strftime("%H:%M") == "01:33"

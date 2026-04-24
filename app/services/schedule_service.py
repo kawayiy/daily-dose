@@ -2,9 +2,12 @@
 """Schedule / Prescription / Medication business logic."""
 from __future__ import annotations
 
+import os
 import re
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, time, timedelta, timezone
+from pathlib import Path
 from typing import TYPE_CHECKING
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import sqlalchemy as sa
 from app import db
@@ -19,6 +22,33 @@ _TIME_PATTERN = re.compile(r"^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")
 
 class ScheduleService:
     """Schedule, prescription and medication creation, validation and queries."""
+
+    @staticmethod
+    def _get_local_timezone():
+        """Return the app's local timezone when available, falling back safely."""
+        tz_name = os.environ.get("TZ")
+        if tz_name:
+            try:
+                return ZoneInfo(tz_name)
+            except ZoneInfoNotFoundError:
+                pass
+
+        try:
+            resolved = str(Path("/etc/localtime").resolve())
+            marker = f"{os.sep}zoneinfo{os.sep}"
+            if marker in resolved:
+                return ZoneInfo(resolved.split(marker, 1)[1])
+        except Exception:
+            pass
+
+        return datetime.now().astimezone().tzinfo or timezone.utc
+
+    @staticmethod
+    def _to_local_datetime(value: datetime) -> datetime:
+        """Convert stored UTC timestamps to local time for display."""
+        if value.tzinfo is None:
+            value = value.replace(tzinfo=timezone.utc)
+        return value.astimezone(ScheduleService._get_local_timezone())
 
     @staticmethod
     def get_or_create_schedule(user_id: int) -> Schedule:
@@ -340,11 +370,10 @@ class ScheduleService:
                             "med_name": med.name,
                             "slot": slot,
                             "taken": is_taken,
-                            "taken_at": log.taken_at if is_taken else None
+                            "taken_at": ScheduleService._to_local_datetime(log.taken_at) if is_taken else None
                         })
             report.append(day_data)
 
         percentage = (total_taken / total_expected * 100) if total_expected > 0 else 100
         return sorted(report, key=lambda x: x['date'], reverse=True), round(percentage, 1)
-
 
